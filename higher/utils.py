@@ -24,13 +24,16 @@ _U = _typing.TypeVar('_U')
 def _copy_tensor(
     t: _torch.Tensor,
     safe_copy: bool,
-    device: _typing.Optional[_torch.device] = None
+    device: _typing.Optional[_torch.device] = None,
+    fp16: bool = False,
 ) -> _torch.Tensor:
     if safe_copy:
         t = t.clone().detach().requires_grad_(t.requires_grad)
     else:
         t = t.detach().requires_grad_(t.requires_grad)
     t = t if device is None else t.to(device)
+    if fp16:
+        t = t.to(_torch.float16) if t.dtype == _torch.float32 else t
     return t
 
 
@@ -129,9 +132,10 @@ def flatten(x: _typing.Any) -> _typing.List[_typing.Any]:
 
 def get_func_params(
     module: _torch.nn.Module,
+    fp16: bool = False,
     device: _typing.Optional[_torch.device] = None,
     safe_copy: bool = True
 ) -> _typing.List[_torch.Tensor]:
     r"""Returns a detached copy of module parameters which requires gradient."""
-    params = [_copy_tensor(p, safe_copy, device) for p in module.parameters()]
+    params = [_copy_tensor(p, safe_copy, device, fp16) for p in module.parameters()]
     return params

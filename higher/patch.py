@@ -88,7 +88,8 @@ def _patched_parameters(
     return iter(self._fast_params[time])
 
 
-class _MonkeyPatchBase(_abc.ABC, _torch.nn.Module):
+# class _MonkeyPatchBase(_abc.ABC, _torch.nn.Module):
+class _MonkeyPatchBase(_torch.nn.Module):
     @_abc.abstractmethod
     def __init__(self) -> None:
         self._param_mapping: _typing.List[int] = []
@@ -491,7 +492,8 @@ def monkeypatch(
     module: _torch.nn.Module,
     device: _typing.Optional[_torch.device] = None,
     copy_initial_weights: bool = True,
-    track_higher_grads: bool = True
+    track_higher_grads: bool = True,
+    fp16: bool = False,
 ) -> _MonkeyPatchBase:
     r"""Create a monkey-patched stateless version of a module.
 
@@ -527,10 +529,10 @@ def monkeypatch(
     """
 
     def encapsulator(
-        fmodule: _MonkeyPatchBase, module: _torch.nn.Module
+        fmodule: _MonkeyPatchBase, module: _torch.nn.Module,
     ) -> None:
         if copy_initial_weights:
-            params = _utils.get_func_params(module, device=device)
+            params = _utils.get_func_params(module, fp16 = fp16, device=device)
         else:
             params = [
                 p.clone() if device is None else p.clone().to(device)
